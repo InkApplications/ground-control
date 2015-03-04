@@ -6,8 +6,8 @@ local and remote data. It coordinates reactive callbacks from [RxJava] and
 provides interfaces that can be used to create sane local SQLLite repositories
 that stay in sync with the remote databases.
 
-This project was designed with [Retrofit] and Android in mind, but they are
-not required.
+This library was designed for use on Android projects, and is particularly
+well-suited for projects using [Retrofit]
 
 [RxJava]: https://github.com/ReactiveX/RxJava
 [Retrofit]: https://square.github.io/retrofit/
