@@ -14,6 +14,9 @@ apply plugin: 'provided-base'
 group = 'com.inkapplications'
 version = '0.0.1'
 
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
 repositories {
     mavenCentral()
 }
