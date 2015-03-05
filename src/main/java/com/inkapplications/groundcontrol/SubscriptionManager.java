@@ -16,7 +16,7 @@ import java.util.LinkedList;
 public class SubscriptionManager
 {
     /** A collection of open/active subscriptions. */
-    final private LinkedList<Subscription> subscriptions = new LinkedList<>();
+    final private LinkedList<Subscription> subscriptions = new LinkedList<Subscription>();
 
     /** Start tracking a new subscription. */
     public void add(Subscription subscription) {

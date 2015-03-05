@@ -31,14 +31,16 @@ public class SubscriptionFactory<ENTITY>
     final private Log logger;
 
     /** Stores in-flight requests. */
-    final private HashMap<String, Observable<ENTITY>> requests = new HashMap<>();
+    final private HashMap<String, Observable<ENTITY>> requests;
 
     /** Stores in-flight requests when fetching a collection. */
-    final private HashMap<String, Observable<List<ENTITY>>> collectionRequests = new HashMap<>();
+    final private HashMap<String, Observable<List<ENTITY>>> collectionRequests;
 
     public SubscriptionFactory(Log logger)
     {
         this.logger = logger;
+        this.requests = new HashMap<String, Observable<ENTITY>>();
+        this.collectionRequests = new HashMap<String, Observable<List<ENTITY>>>();
     }
 
     /**
@@ -70,7 +72,7 @@ public class SubscriptionFactory<ENTITY>
             this.collectionRequests.put(key, callback);
             PublishSubject<List<ENTITY>> composite = PublishSubject.create();
             composite.subscribe(observer);
-            composite.subscribe(new CleanupObserver<>(this.collectionRequests, key));
+            composite.subscribe(new CleanupObserver<List<ENTITY>>(this.collectionRequests, key));
             subscription = callback.subscribe(composite);
         } else {
             this.logger.debug("Joining with previous request.");
@@ -110,7 +112,7 @@ public class SubscriptionFactory<ENTITY>
             this.requests.put(key, callback);
             PublishSubject<ENTITY> composite = PublishSubject.create();
             composite.subscribe(observer);
-            composite.subscribe(new CleanupObserver<>(this.requests, key));
+            composite.subscribe(new CleanupObserver<ENTITY>(this.requests, key));
             subscription = callback.subscribe(composite);
         } else {
             this.logger.debug("Joining with previous request.");
