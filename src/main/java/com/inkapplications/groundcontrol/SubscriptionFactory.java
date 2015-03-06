@@ -60,7 +60,7 @@ public class SubscriptionFactory<ENTITY>
         Observer<List<ENTITY>> observer,
         String key
     ) {
-        this.logger.trace("Creating collection subscription.");
+        this.logger.trace("Creating collection subscription for Key: " + key);
         Observable<List<ENTITY>> callback = Observable.create(onSubscribe);
         callback = callback.subscribeOn(Schedulers.io());
         callback = callback.observeOn(AndroidSchedulers.mainThread());
@@ -72,7 +72,7 @@ public class SubscriptionFactory<ENTITY>
             PublishSubject<List<ENTITY>> composite = PublishSubject.create();
             this.collectionRequests.put(key, composite);
             composite.subscribe(observer);
-            composite.subscribe(new CleanupObserver<List<ENTITY>>(this.collectionRequests, key));
+            composite.subscribe(new CleanupObserver<List<ENTITY>>(this.logger, this.collectionRequests, key));
             subscription = callback.subscribe(composite);
         } else {
             this.logger.debug("Joining with previous request.");
@@ -99,11 +99,10 @@ public class SubscriptionFactory<ENTITY>
         Observer<ENTITY> observer,
         String key
     ) {
-        this.logger.trace("Creating subscription.");
+        this.logger.trace("Creating subscription for Key: " + key);
         Observable<ENTITY> callback = Observable.create(onSubscribe);
         callback = callback.subscribeOn(Schedulers.io());
         callback = callback.observeOn(AndroidSchedulers.mainThread());
-        callback = callback.cache();
 
         PublishSubject<ENTITY> previousRequest = this.requests.get(key);
         Subscription subscription;
@@ -112,7 +111,7 @@ public class SubscriptionFactory<ENTITY>
             PublishSubject<ENTITY> composite = PublishSubject.create();
             this.requests.put(key, composite);
             composite.subscribe(observer);
-            composite.subscribe(new CleanupObserver<ENTITY>(this.requests, key));
+            composite.subscribe(new CleanupObserver<ENTITY>(this.logger, this.requests, key));
             subscription = callback.subscribe(composite);
         } else {
             this.logger.debug("Joining with previous request.");

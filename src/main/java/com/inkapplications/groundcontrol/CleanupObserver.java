@@ -4,6 +4,7 @@
  */
 package com.inkapplications.groundcontrol;
 
+import org.apache.commons.logging.Log;
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.PublishSubject;
@@ -22,6 +23,9 @@ import java.util.HashMap;
  */
 final class CleanupObserver<ENTITY> implements Observer<ENTITY>
 {
+    /** Log cleanup callback events. */
+    final private Log logger;
+
     /** Stateful storage of in-flight requests. */
     final private HashMap<String, PublishSubject<ENTITY>> requests;
 
@@ -32,8 +36,9 @@ final class CleanupObserver<ENTITY> implements Observer<ENTITY>
      * @param requests Stateful storage of in-flight requests.
      * @param key Key to remove observables of on completion.
      */
-    public CleanupObserver(HashMap<String, PublishSubject<ENTITY>> requests, String key)
+    public CleanupObserver(Log logger, HashMap<String, PublishSubject<ENTITY>> requests, String key)
     {
+        this.logger = logger;
         this.requests = requests;
         this.key = key;
     }
@@ -41,6 +46,7 @@ final class CleanupObserver<ENTITY> implements Observer<ENTITY>
     @Override
     public void onCompleted()
     {
+        this.logger.trace("Cleaning up key: " + key);
         this.requests.remove(this.key);
     }
 

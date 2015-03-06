@@ -25,7 +25,7 @@ repositories {
     }
 }
 dependencies {
-    compile 'com.github.InkApplications:ground-control:v0.0.3'
+    compile 'com.github.InkApplications:ground-control:v0.0.4'
 }
 ~~~
 
