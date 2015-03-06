@@ -6,6 +6,7 @@ package com.inkapplications.groundcontrol;
 
 import rx.Observable;
 import rx.Observer;
+import rx.subjects.PublishSubject;
 
 import java.util.HashMap;
 
@@ -22,7 +23,7 @@ import java.util.HashMap;
 final class CleanupObserver<ENTITY> implements Observer<ENTITY>
 {
     /** Stateful storage of in-flight requests. */
-    final private HashMap<String, Observable<ENTITY>> requests;
+    final private HashMap<String, PublishSubject<ENTITY>> requests;
 
     /** Key to remove observables of on completion. */
     final private String key;
@@ -31,7 +32,7 @@ final class CleanupObserver<ENTITY> implements Observer<ENTITY>
      * @param requests Stateful storage of in-flight requests.
      * @param key Key to remove observables of on completion.
      */
-    public CleanupObserver(HashMap<String, Observable<ENTITY>> requests, String key)
+    public CleanupObserver(HashMap<String, PublishSubject<ENTITY>> requests, String key)
     {
         this.requests = requests;
         this.key = key;
