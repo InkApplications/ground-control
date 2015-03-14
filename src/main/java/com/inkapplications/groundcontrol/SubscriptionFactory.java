@@ -8,12 +8,11 @@ import org.apache.commons.logging.Log;
 import rx.Observable;
 import rx.Observable.OnSubscribe;
 import rx.Observer;
+import rx.Scheduler;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subjects.PublishSubject;
+import rx.functions.Action0;
+import rx.subjects.ReplaySubject;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -26,21 +25,26 @@ import java.util.List;
  *
  * @param <ENTITY> The entity that this repository represents.
  */
+@SuppressWarnings("unused")
 public class SubscriptionFactory<ENTITY>
 {
     final private Log logger;
+    final private Scheduler subscribeScheduler;
+    final private Scheduler observeScheduler;
 
     /** Stores in-flight requests. */
-    final private HashMap<String, PublishSubject<ENTITY>> requests;
+    final private RequestCollection<ENTITY> requests;
 
     /** Stores in-flight requests when fetching a collection. */
-    final private HashMap<String, PublishSubject<List<ENTITY>>> collectionRequests;
+    final private RequestCollection<List<ENTITY>> collectionRequests;
 
-    public SubscriptionFactory(Log logger)
+    public SubscriptionFactory(Log logger, Scheduler subscribeOn, Scheduler observeOn)
     {
         this.logger = logger;
-        this.requests = new HashMap<String, PublishSubject<ENTITY>>();
-        this.collectionRequests = new HashMap<String, PublishSubject<List<ENTITY>>>();
+        this.subscribeScheduler = subscribeOn;
+        this.observeScheduler = observeOn;
+        this.requests = new RequestCollection<ENTITY>();
+        this.collectionRequests = new RequestCollection<List<ENTITY>>();
     }
 
     /**
@@ -52,7 +56,7 @@ public class SubscriptionFactory<ENTITY>
      *
      * @param onSubscribe Logic to run for the request.
      * @param observer Callback to invoke on request events.
-     * @param key A unique key to identify this request type seperate from others.
+     * @param key A unique key to identify this request type separate from others.
      * @return A subscription for the observer that may be unsubscribed if necessary.
      */
     final public Subscription createCollectionSubscription(
@@ -62,18 +66,28 @@ public class SubscriptionFactory<ENTITY>
     ) {
         this.logger.trace("Creating collection subscription for Key: " + key);
         Observable<List<ENTITY>> callback = Observable.create(onSubscribe);
-        callback = callback.subscribeOn(Schedulers.io());
-        callback = callback.observeOn(AndroidSchedulers.mainThread());
+        callback = callback.subscribeOn(this.subscribeScheduler);
+        callback = callback.observeOn(this.observeScheduler);
 
-        PublishSubject<List<ENTITY>> previousRequest = this.collectionRequests.get(key);
+
+        CompositeRequestManager<List<ENTITY>> previousRequest = this.collectionRequests.get(key);
         Subscription subscription;
         if (null == previousRequest) {
             this.logger.debug("No previous request to join.");
-            PublishSubject<List<ENTITY>> composite = PublishSubject.create();
-            this.collectionRequests.put(key, composite);
-            composite.subscribe(observer);
-            composite.subscribe(new CleanupObserver<List<ENTITY>>(this.logger, this.collectionRequests, key));
-            subscription = callback.subscribe(composite);
+            ReplaySubject<List<ENTITY>> composite = ReplaySubject.create();
+            Action0 unsubscribeCleanup = new UnsubscribeCleanup<List<ENTITY>>(this.logger, this.collectionRequests, key);
+            Action0 completeCleanup = new CompleteCleanup<List<ENTITY>>(this.logger, this.collectionRequests, key);
+
+            callback = callback.doOnCompleted(completeCleanup);
+
+            Subscription mainSubscription = callback.subscribe(composite);
+            CompositeRequestManager<List<ENTITY>> requestManager = new CompositeRequestManager<List<ENTITY>>(
+                composite,
+                mainSubscription,
+                unsubscribeCleanup
+            );
+            this.collectionRequests.put(key, requestManager);
+            subscription = requestManager.subscribe(observer);
         } else {
             this.logger.debug("Joining with previous request.");
             subscription = previousRequest.subscribe(observer);
@@ -91,7 +105,7 @@ public class SubscriptionFactory<ENTITY>
      *
      * @param onSubscribe Logic to run for the request.
      * @param observer Callback to invoke on request events.
-     * @param key A unique key to identify this request type seperate from others.
+     * @param key A unique key to identify this request type separate from others.
      * @return A subscription for the observer that may be unsubscribed if necessary.
      */
     final public Subscription createSubscription(
@@ -101,18 +115,27 @@ public class SubscriptionFactory<ENTITY>
     ) {
         this.logger.trace("Creating subscription for Key: " + key);
         Observable<ENTITY> callback = Observable.create(onSubscribe);
-        callback = callback.subscribeOn(Schedulers.io());
-        callback = callback.observeOn(AndroidSchedulers.mainThread());
+        callback = callback.subscribeOn(this.subscribeScheduler);
+        callback = callback.observeOn(this.observeScheduler);
 
-        PublishSubject<ENTITY> previousRequest = this.requests.get(key);
+        CompositeRequestManager<ENTITY> previousRequest = this.requests.get(key);
         Subscription subscription;
         if (null == previousRequest) {
             this.logger.debug("No previous request to join.");
-            PublishSubject<ENTITY> composite = PublishSubject.create();
-            this.requests.put(key, composite);
-            composite.subscribe(observer);
-            composite.subscribe(new CleanupObserver<ENTITY>(this.logger, this.requests, key));
-            subscription = callback.subscribe(composite);
+            ReplaySubject<ENTITY> composite = ReplaySubject.create();
+            Action0 unsubscribeCleanup = new UnsubscribeCleanup<ENTITY>(this.logger, this.requests, key);
+            Action0 completeCleanup = new CompleteCleanup<ENTITY>(this.logger, this.requests, key);
+
+            callback = callback.doOnCompleted(completeCleanup);
+
+            Subscription mainSubscription = callback.subscribe(composite);
+            CompositeRequestManager<ENTITY> manager = new CompositeRequestManager<ENTITY>(
+                composite,
+                mainSubscription,
+                unsubscribeCleanup
+            );
+            this.requests.put(key, manager);
+            subscription = manager.subscribe(observer);
         } else {
             this.logger.debug("Joining with previous request.");
             subscription = previousRequest.subscribe(observer);

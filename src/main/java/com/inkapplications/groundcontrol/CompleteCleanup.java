@@ -5,11 +5,7 @@
 package com.inkapplications.groundcontrol;
 
 import org.apache.commons.logging.Log;
-import rx.Observable;
-import rx.Observer;
-import rx.subjects.PublishSubject;
-
-import java.util.HashMap;
+import rx.functions.Action0;
 
 /**
  * Observer for removing completed requests in a collection.
@@ -20,14 +16,15 @@ import java.util.HashMap;
  * on completion of the request.
  *
  * @param <ENTITY> The subscription entity type that this is bound to.
+ * @author Maxwell Vandervelde (Max@MaxVandervelde.com)
  */
-final class CleanupObserver<ENTITY> implements Observer<ENTITY>
+final class CompleteCleanup<ENTITY> implements Action0
 {
     /** Log cleanup callback events. */
     final private Log logger;
 
     /** Stateful storage of in-flight requests. */
-    final private HashMap<String, PublishSubject<ENTITY>> requests;
+    final private RequestCollection<ENTITY> requests;
 
     /** Key to remove observables of on completion. */
     final private String key;
@@ -36,20 +33,20 @@ final class CleanupObserver<ENTITY> implements Observer<ENTITY>
      * @param requests Stateful storage of in-flight requests.
      * @param key Key to remove observables of on completion.
      */
-    public CleanupObserver(Log logger, HashMap<String, PublishSubject<ENTITY>> requests, String key)
-    {
+    public CompleteCleanup(
+        Log logger,
+        RequestCollection<ENTITY> requests,
+        String key
+    ) {
         this.logger = logger;
         this.requests = requests;
         this.key = key;
     }
 
     @Override
-    public void onCompleted()
+    public void call()
     {
-        this.logger.trace("Cleaning up key: " + key);
+        this.logger.trace("Complete. Cleaning up key: " + key);
         this.requests.remove(this.key);
     }
-
-    @Override public void onError(Throwable e) {}
-    @Override public void onNext(ENTITY entity) {}
 }

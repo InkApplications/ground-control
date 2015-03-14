@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.netflix.rxjava:rxjava-android:0.20.7'
+    compile 'io.reactivex:rxjava:1.0.8'
     provided 'commons-logging:commons-logging:1.2'
 }
 

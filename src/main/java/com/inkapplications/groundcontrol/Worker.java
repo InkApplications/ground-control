@@ -12,6 +12,7 @@ import java.sql.SQLException;
  * A service that looks up data locally.
  *
  * @param <YIELD> The type of data that the worker will lookup and return.
+ * @author Maxwell Vandervelde (Max@MaxVandervelde.com)
  */
 public interface Worker<YIELD> extends Observable.OnSubscribe<YIELD>
 {
