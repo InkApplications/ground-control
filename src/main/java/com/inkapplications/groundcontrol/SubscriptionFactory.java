@@ -47,6 +47,15 @@ public class SubscriptionFactory<ENTITY>
         this.collectionRequests = new RequestCollection<List<ENTITY>>();
     }
 
+    public SubscriptionFactory(Scheduler subscribeOn, Scheduler observeOn)
+    {
+        this.logger = new NullLogger();
+        this.subscribeScheduler = subscribeOn;
+        this.observeScheduler = observeOn;
+        this.requests = new RequestCollection<ENTITY>();
+        this.collectionRequests = new RequestCollection<List<ENTITY>>();
+    }
+
     /**
      * Create or join with previous subscription for a collection of the entity.
      *
