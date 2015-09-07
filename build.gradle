@@ -12,7 +12,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'provided-base'
 
 group = 'com.inkapplications'
-version = '0.1.0'
+version = '0.2.0'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -23,7 +23,6 @@ repositories {
 
 dependencies {
     compile 'io.reactivex:rxjava:1.0.8'
-    provided 'commons-logging:commons-logging:1.2'
 }
 
 

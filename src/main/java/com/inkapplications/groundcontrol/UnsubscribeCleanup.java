@@ -4,7 +4,6 @@
  */
 package com.inkapplications.groundcontrol;
 
-import org.apache.commons.logging.Log;
 import rx.functions.Action0;
 
 /**

@@ -4,7 +4,6 @@
  */
 package com.inkapplications.groundcontrol;
 
-import org.apache.commons.logging.Log;
 import rx.Observable;
 import rx.Observable.OnSubscribe;
 import rx.Observer;
