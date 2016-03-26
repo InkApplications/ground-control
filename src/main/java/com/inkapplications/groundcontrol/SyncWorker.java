@@ -7,6 +7,7 @@ package com.inkapplications.groundcontrol;
 import rx.Subscriber;
 
 import java.sql.SQLException;
+import java.util.Collection;
 
 /**
  * A worker that synchronizes a remote data source with a local one.
@@ -44,26 +45,20 @@ abstract public class SyncWorker<YIELD> implements Worker<YIELD>
      */
     private void lookup(Subscriber<? super YIELD> subscriber) throws Exception
     {
-        this.reportLocal(subscriber);
+        YIELD currentEvents = this.lookupLocal();
+        if (currentEvents instanceof Collection) {
+            if (false == ((Collection) currentEvents).isEmpty()) {
+                subscriber.onNext(currentEvents);
+            }
+        }
 
         if (false == this.dataIsStale()) {
             return;
         }
 
         this.syncRemote();
-        this.reportLocal(subscriber);
-    }
-
-    /**
-     * Lookup the local data and inform the observer of the results.
-     *
-     * @param subscriber The subscribed observer to inform.
-     * @throws SQLException If anything goes wrong with the local data lookup.
-     */
-    protected void reportLocal(Subscriber<? super YIELD> subscriber) throws SQLException
-    {
-        YIELD currentEvents = this.lookupLocal();
-        subscriber.onNext(currentEvents);
+        YIELD newEvents = this.lookupLocal();
+        subscriber.onNext(newEvents);
     }
 
     /**
